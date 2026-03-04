@@ -4,8 +4,8 @@ import pandas as pd
 from tqdm import tqdm
 
 #路径设置
-ROOT = "datasets/scenario32"
-CSV_PATH = os.path.join(ROOT, "scenario32_dev.csv")
+ROOT = "datasets/scenario33"
+CSV_PATH = os.path.join(ROOT, "scenario33_dev.csv")
 
 #读取基站GPS
 def load_bs_location():
@@ -65,12 +65,8 @@ def preprocess():
     # === 3️⃣ 处理标签 ===
     labels = df["unit1_beam"].values
 
-    # 检查是否从1开始
-    if labels.min() == 1:
-        print("Beam index starts from 1 → converting to 0-based")
-        df["label"] = df["unit1_beam"] - 1
-    else:
-        df["label"] = df["unit1_beam"]
+    df["label"] = df["unit1_beam"] - 1
+
 
     # === 4️⃣ 处理图像路径 ===
     df["image_path"] = df["unit1_rgb"].apply(
@@ -91,7 +87,7 @@ def preprocess():
     print("dy range:", df["dy"].min(), df["dy"].max())
 
     # === 6️⃣ 保存 ===
-    output_path = os.path.join(ROOT, "scenario32_processed_1.csv")
+    output_path = os.path.join(ROOT, "scenario33_processed.csv")
     df[["image_path", "dx", "dy", "label"]].to_csv(output_path, index=False)
 
     print("Saved to:", output_path)

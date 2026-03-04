@@ -17,11 +17,12 @@ def evaluate(model, dataloader, device):
     top5 = 0
 
     with torch.no_grad():
-        for x, y in dataloader:
-            x = x.to(device)
+        for image, geo, y in dataloader:
+            image = image.to(device)
+            geo = geo.to(device)
             y = y.to(device)
 
-            output = model(x)
+            output = model(image, geo)
 
             batch_size = y.size(0)
             total += batch_size

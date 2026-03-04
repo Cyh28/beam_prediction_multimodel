@@ -1,25 +1,22 @@
-# train.py
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, random_split
 
-from dataset import GeoDataset
-from model import GeoMLP
+from dataset import FusionDataset
+from model import FusionModel
 from utils import evaluate
 
 
-# ====== 参数 ======
-CSV_PATH = "datasets/scenario32/scenario32_processed.csv"
-BATCH_SIZE = 64
-EPOCHS = 30
-LR = 1e-3
+CSV_PATH = "datasets/scenario33/scenario33_processed.csv"
+BATCH_SIZE = 32
+EPOCHS = 20
+LR = 1e-4
 NUM_CLASSES = 64
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-# ====== 数据 ======
-dataset = GeoDataset(CSV_PATH)
+dataset = FusionDataset(CSV_PATH)
 
 train_size = int(0.8 * len(dataset))
 val_size = len(dataset) - train_size
@@ -27,27 +24,26 @@ val_size = len(dataset) - train_size
 train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
+val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
 
 
-# ====== 模型 ======
-model = GeoMLP(num_classes=NUM_CLASSES).to(DEVICE)
+model = FusionModel(NUM_CLASSES).to(DEVICE)
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
-
-# ====== 训练 ======
+# Training Loop
 for epoch in range(EPOCHS):
     model.train()
     total_loss = 0
 
-    for x, y in train_loader:
-        x = x.to(DEVICE)
-        y = y.to(DEVICE)
+    for image, geo, label in train_loader:
+        image = image.to(DEVICE)
+        geo = geo.to(DEVICE)
+        label = label.to(DEVICE)
 
         optimizer.zero_grad()
-        output = model(x)
-        loss = criterion(output, y)
+        output = model(image, geo)
+        loss = criterion(output, label)
         loss.backward()
         optimizer.step()
 
@@ -57,7 +53,7 @@ for epoch in range(EPOCHS):
 
     top1, top3, top5 = evaluate(model, val_loader, DEVICE)
 
-    print(f"Epoch [{epoch+1}/{EPOCHS}]")
+    print(f"Epoch {epoch+1}")
     print(f"Loss: {avg_loss:.4f}")
     print(f"Val Top1: {top1:.4f} | Top3: {top3:.4f} | Top5: {top5:.4f}")
-    print("-" * 40)
+    print("-"*40)
