@@ -18,28 +18,38 @@ class GeoBranch(nn.Module):
 
 
 class FusionModel(nn.Module):
-    def __init__(self, num_classes=64):
+    def __init__(self, num_classes=64, backbone="resnet34"):
         super().__init__()
 
-        # ===== Image branch =====
-        self.cnn = models.resnet18(pretrained=True)
-        self.cnn.fc = nn.Identity()  # 输出 512 维
+        if backbone == "resnet34":
+            self.cnn = models.resnet34(pretrained=True)
+            self.cnn.fc = nn.Identity()
+            img_dim = 512
 
-        # ===== Geo branch =====
+        elif backbone == "vit":
+            self.cnn = models.vit_b_16(pretrained=True)
+            self.cnn.heads = nn.Identity()
+            img_dim = 768
+
+        elif backbone == "swin":
+            self.cnn = models.swin_t(pretrained=True)
+            self.cnn.head = nn.Identity()
+            img_dim = 768
+
+        else:
+            raise ValueError("Unknown backbone")
+
         self.geo = GeoBranch()
 
-        # ===== Fusion head =====
         self.fusion = nn.Sequential(
-            nn.Linear(512 + 128, 256),
+            nn.Linear(img_dim + 128, 256),
             nn.ReLU(),
             nn.Linear(256, num_classes)
         )
 
     def forward(self, image, geo):
-        img_feat = self.cnn(image)      # (B,512)
-        geo_feat = self.geo(geo)        # (B,128)
+        img_feat = self.cnn(image)
+        geo_feat = self.geo(geo)
 
         fused = torch.cat([img_feat, geo_feat], dim=1)
-        out = self.fusion(fused)
-
-        return out
+        return self.fusion(fused)
