@@ -4,7 +4,8 @@ import pandas as pd
 from tqdm import tqdm
 
 #路径设置
-ROOT = "datasets/scenario33"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.join(BASE_DIR, "datasets", "scenario33")
 CSV_PATH = os.path.join(ROOT, "scenario33_dev.csv")
 
 #读取基站GPS
